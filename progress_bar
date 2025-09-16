@@ -4,29 +4,25 @@ BATCHSIZE=5
 BAR_CHAR='|'
 EMPTY_CHAR=' '
 
+BAR_WIDTH=50
+PREFIX='['
+SUFFIX=']'
+
 progress_bar_draw() {
   local current=$1
   local length=$2
-  local width=50
   local perc_done=$((current * 100 / length))
-  local num_bars=$((perc_done * width / 100))
+  local num_bars=$((perc_done * BAR_WIDTH / 100))
 
-  local s_out='['
+  local s_out
 
-  local i
+  local bar=$(printf "%*s" "$num_bars" "" | tr ' ' "$BAR_CHAR")
+  local empty=$(printf "%*s" "$((BAR_WIDTH - num_bars))" "" | tr ' ' "$EMPTY_CHAR")
+  local s_stats="$current/$length ($perc_done%%)"
+  s_out="$PREFIX$bar$empty$SUFFIX $s_stats"
 
-  for ((i = 0; i < num_bars; i++)); do
-    s_out+=$BAR_CHAR
-  done
-  for ((i = num_bars; i < width; i++)); do
-    s_out+=$EMPTY_CHAR
-  done
-  s_out+=']'
-  printf "\r%s %d/%d (%d%%)" "$s_out" "$current" "$length" "$perc_done"
-
+  printf "\r%s" "$s_out"
 }
-
-# progress_bar_init() {}
 
 process_item() {
   sleep .01
@@ -54,7 +50,10 @@ main() {
   shopt checkwinsize
   (:)
 
-  printf "Size of terminal detected as: %dx%d\n" "$COLUMNS" "$LINES"
+  trap deinit_term EXIT
+  trap init_term WINCH
+
+  init_term
 
   local i=0
   local length=500
