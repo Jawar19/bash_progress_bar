@@ -1,0 +1,19 @@
+#!/bin/bash
+
+progress_bar_draw() {
+}
+
+progress_bar_init() {}
+
+process_item() {
+  sleep .01
+}
+
+main() {
+  echo "From main"
+  for ((i = 0; i < length; i += BATCHSIZE)); do
+    progress_bar_draw "$((i + 1))" "length"
+  done
+}
+
+main "$@"
