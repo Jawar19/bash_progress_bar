@@ -1,18 +1,71 @@
 #!/bin/bash
 
+BATCHSIZE=5
+BAR_CHAR='|'
+EMPTY_CHAR=' '
+
 progress_bar_draw() {
+  local current=$1
+  local length=$2
+  local width=50
+  local perc_done=$((current * 100 / length))
+  local num_bars=$((perc_done * width / 100))
+
+  local s_out='['
+
+  local i
+
+  for ((i = 0; i < num_bars; i++)); do
+    s_out+=$BAR_CHAR
+  done
+  for ((i = num_bars; i < width; i++)); do
+    s_out+=$EMPTY_CHAR
+  done
+  s_out+=']'
+  printf "\r%s %d/%d (%d%%)" "$s_out" "$current" "$length" "$perc_done"
+
 }
 
-progress_bar_init() {}
+# progress_bar_init() {}
 
 process_item() {
   sleep .01
+  # echo Processing item
+}
+
+init_term() {
+  printf "Init term"
+  # save cursor position
+  # add blank line
+  # set margins
+  # restore cursor position
+}
+deinit_term() {
+  printf "Deinit term"
+  # save cursor location
+  # set cursor position
+  # clear line
+  # set margins
+  # restore cursor
 }
 
 main() {
-  echo "From main"
+
+  shopt checkwinsize
+  (:)
+
+  printf "Size of terminal detected as: %dx%d\n" "$COLUMNS" "$LINES"
+
+  local i=0
+  local length=500
+
+  printf "Batchsize set to: %d\n" "$BATCHSIZE"
+  printf "Length set to: %d\n" "$length"
+
   for ((i = 0; i < length; i += BATCHSIZE)); do
-    progress_bar_draw "$((i + 1))" "length"
+    # echo "Loop iteration: i=$i"
+    progress_bar_draw "$((i + 1))" "$length"
+    process_item
   done
 }
 
