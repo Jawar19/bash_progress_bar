@@ -59,8 +59,8 @@ deinit_term() {
   printf $SET_POSITION $LINES 0 # set cursor position
   printf $CLEAR_LINE            # clear line
   printf "\e[%d;%dr" 0 $LINES   # set margins
-  printf "\e[?25h"              # make visible
   printf $RESTORE_CURSOR        # restore cursor
+  printf "\e[?25h"              # make visible
 }
 
 main() {
