@@ -1,47 +1,66 @@
 #!/bin/bash
 
 BATCHSIZE=5
-BAR_CHAR='|'
-EMPTY_CHAR=' '
+BAR_CHAR="${BAR_CHAR:-#}"
+EMPTY_CHAR="${EMPTY_CHAR:- }"
 
 BAR_WIDTH=50
 PREFIX='['
 SUFFIX=']'
 
+SAVE_CURSOR='\e7'
+RESTORE_CURSOR='\e8'
+SET_POSITION="\e[%d;%dH"
+CLEAR_LINE="\e[0K"
+
 progress_bar_draw() {
   local current=$1
   local length=$2
   local perc_done=$((current * 100 / length))
-  local num_bars=$((perc_done * BAR_WIDTH / 100))
+
+  local s_stats=" $current/$length ($perc_done%%) "
+
+  local i_width=$((BAR_WIDTH - ${#s_stats} - ${#PREFIX} - ${#SUFFIX}))
+  local num_bars=$((perc_done * i_width / 100))
 
   local s_out
-
   local bar=$(printf "%*s" "$num_bars" "" | tr ' ' "$BAR_CHAR")
-  local empty=$(printf "%*s" "$((BAR_WIDTH - num_bars))" "" | tr ' ' "$EMPTY_CHAR")
-  local s_stats="$current/$length ($perc_done%%)"
-  s_out="$PREFIX$bar$empty$SUFFIX $s_stats"
+  local empty=$(printf "%*s" "$((i_width - num_bars))" "" | tr ' ' "$EMPTY_CHAR")
+  s_out="$PREFIX$bar$empty$SUFFIX$s_stats"
 
-  printf "\r%s" "$s_out"
+  printf $SAVE_CURSOR
+  printf $SET_POSITION $LINES 0
+  printf $CLEAR_LINE
+  printf "%s" "$s_out"
+  printf $RESTORE_CURSOR
 }
 
 process_item() {
-  sleep .01
-  # echo Processing item
+  local item_num=$1
+  sleep .05
+  if [[ -n "$item_num" ]]; then
+    echo "Processing item $item_num"
+  else
+    echo "Processing item"
+  fi
 }
 
 init_term() {
+  BAR_WIDTH=$COLUMNS
   printf "\n"                           # add blank line
-  printf "\e7"                          # Save current cursor position
+  printf $SAVE_CURSOR                   # Save current cursor position
   printf "\e[%d;%dr" 0 "$((LINES - 1))" # set margins
-  printf "\e8"                          # restore cursor position
-  printf "\e[1A"
+  printf $RESTORE_CURSOR                # restore cursor position
+  printf "\e[?25l"                      # make invisible
+  printf "\e[1A"                        # Move cursor up a line
 }
 deinit_term() {
-  printf "\e7"                # save cursor location
-  printf "\e[%d;%dH" $LINES 0 # set cursor position
-  printf "\e[2K"              # clear line
-  printf "\e[%d;%dr" 0 $LINES # set margins
-  printf "\e8"                # restore cursor
+  printf $SAVE_CURSOR           # save cursor location
+  printf $SET_POSITION $LINES 0 # set cursor position
+  printf $CLEAR_LINE            # clear line
+  printf "\e[%d;%dr" 0 $LINES   # set margins
+  printf "\e[?25h"              # make visible
+  printf $RESTORE_CURSOR        # restore cursor
 }
 
 main() {
@@ -63,8 +82,9 @@ main() {
   for ((i = 0; i < length; i += BATCHSIZE)); do
     # echo "Loop iteration: i=$i"
     progress_bar_draw "$((i + 1))" "$length"
-    process_item
+    process_item "$((i))"
   done
+  progress_bar_draw "$length" "$length"
 }
 
 main "$@"
