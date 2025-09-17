@@ -30,24 +30,23 @@ process_item() {
 }
 
 init_term() {
-  printf "Init term"
-  # save cursor position
-  # add blank line
-  # set margins
-  # restore cursor position
+  printf "\n"                           # add blank line
+  printf "\e7"                          # Save current cursor position
+  printf "\e[%d;%dr" 0 "$((LINES - 1))" # set margins
+  printf "\e8"                          # restore cursor position
+  printf "\e[1A"
 }
 deinit_term() {
-  printf "Deinit term"
-  # save cursor location
-  # set cursor position
-  # clear line
-  # set margins
-  # restore cursor
+  printf "\e7"                # save cursor location
+  printf "\e[%d;%dH" $LINES 0 # set cursor position
+  printf "\e[2K"              # clear line
+  printf "\e[%d;%dr" 0 $LINES # set margins
+  printf "\e8"                # restore cursor
 }
 
 main() {
 
-  shopt checkwinsize
+  shopt -s checkwinsize
   (:)
 
   trap deinit_term EXIT
